@@ -22,9 +22,24 @@ public class ClientController : Controller
     [HttpPost]
     public IActionResult CreateClient([FromBody] ClientDto client)
     {
+        if(client == null) 
+            return BadRequest(ModelState);
+
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+        
+        var cpfExist = _repository.GetAllClients().Any(c => c.CPF.Equals(client.CPF));
+
+        if (cpfExist) 
+        {
+            ModelState.AddModelError("", "Client already exists");
+            return BadRequest(ModelState);
+        }
+            
         var mapped = _mapper.Map<Client>(client);
 
-        _repository.CreateClient(mapped);
+        if (!_repository.CreateClient(mapped))
+            return StatusCode(500, ModelState);
 
         return Ok("Created with Success");
     }
@@ -39,23 +54,42 @@ public class ClientController : Controller
     [HttpGet("{id}")]
     public IActionResult GetClient(int id)
     {
+        if (!_repository.ClientExist(id))
+            return NotFound();
+
         var client = _mapper.Map<ClientDto>(_repository.GetClient(id));
+
         return Ok(client);
     }
 
     [HttpDelete("{id}")]
     public IActionResult DeleteClient(int id)
     {
-        _repository.DeleteClient(id);
+        if (!_repository.ClientExist(id))
+            return NotFound();
+
+        if (!_repository.DeleteClient(id))
+            return StatusCode(500, ModelState);
+
         return Ok("Deleted with Success");
     }
 
     [HttpPut]
     public IActionResult UpdateClient([FromBody] ClientDto client)
     {
+        if (client == null)
+            return BadRequest(ModelState);
+
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        if (!_repository.ClientExist(client.Id))
+            return NotFound();
+
         var mapped = _mapper.Map<Client>(client);
 
-        _repository.UpdateClient(mapped);
+        if (!_repository.UpdateClient(mapped))
+            return StatusCode(500, ModelState);
 
         return Ok("Updated with success");
     }
