@@ -65,8 +65,9 @@ public class IngredientController : Controller
 		return Ok(ingredient);
 	}
 
-	[HttpPut]
-	public IActionResult UpdateIngredient([FromBody] IngredientDto ingredient)
+	//Query and Body "id" have to be the same
+	[HttpPut("id")]
+	public IActionResult UpdateIngredient(int id, [FromBody] IngredientDto ingredient)
 	{
 		if (ingredient == null)
 			return BadRequest(ModelState);
@@ -74,7 +75,7 @@ public class IngredientController : Controller
 		if(!ModelState.IsValid)
 			return BadRequest();
 
-		var exist = _repository.IngredientExist(ingredient.Id);
+		var exist = _repository.IngredientExist(id);
 
 
         if (!exist)
@@ -82,7 +83,8 @@ public class IngredientController : Controller
 
         var mapped = _mapper.Map<Ingredient>(ingredient);
 
-		_repository.UpdateIngredient(mapped);
+		if (!_repository.UpdateIngredient(mapped))
+			return StatusCode(500, ModelState);
 
 		return Ok("Updated with success");
 	}

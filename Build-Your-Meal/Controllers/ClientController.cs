@@ -74,8 +74,10 @@ public class ClientController : Controller
         return Ok("Deleted with Success");
     }
 
-    [HttpPut]
-    public IActionResult UpdateClient([FromBody] ClientDto client)
+
+    //Query and Body "id" have to be the same
+    [HttpPut("id")]
+    public IActionResult UpdateClient(int id, [FromBody] ClientDto client)
     {
         if (client == null)
             return BadRequest(ModelState);
@@ -83,7 +85,7 @@ public class ClientController : Controller
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        if (!_repository.ClientExist(client.Id))
+        if (!_repository.ClientExist(id))
             return NotFound();
 
         var mapped = _mapper.Map<Client>(client);
