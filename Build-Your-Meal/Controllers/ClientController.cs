@@ -32,7 +32,7 @@ public class ClientController : Controller
 
         if (cpfExist) 
         {
-            ModelState.AddModelError("", "Client already exists");
+            ModelState.AddModelError("", "Client already stored in the database");
             return BadRequest(ModelState);
         }
             
@@ -68,7 +68,7 @@ public class ClientController : Controller
         if (!_repository.ClientExist(id))
             return NotFound();
 
-        if (!_repository.DeleteClient(id))
+        if (_repository.DeleteClient(id))
             return StatusCode(500, ModelState);
 
         return Ok("Deleted with Success");

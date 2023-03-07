@@ -23,18 +23,33 @@ public class IngredientController : Controller
 	public IActionResult CreateIngredient([FromBody] IngredientDto ingredient)
 	{
 
+		if (ingredient == null)
+			return BadRequest(ModelState);
+
+		if (!ModelState.IsValid)
+			return BadRequest(ModelState);
+
+		var exist = _repository.GetAllIngredients().Any(i => i.Name.Equals(ingredient.Name));
+
+		if (exist)
+		{
+			ModelState.AddModelError("", "Ingredient already stored in the database");
+			return BadRequest(ModelState);
+		}
+
+
 		var mapped = _mapper.Map<Ingredient>(ingredient);
 
-		if (_repository.CreateIngredient(mapped))
-			return Ok("Created with success");
-
-		return BadRequest(ModelState);
-	}
+		if (!_repository.CreateIngredient(mapped))
+			return StatusCode(500, ModelState);
+                
+        return Ok("Created with success");
+    }
 
 	[HttpGet]
 	public IActionResult GetAllIngredients()
 	{
-		var ingredients = _mapper.Map<List<IngredientDto>>( _repository.GetAllIngredients());
+		var ingredients = _mapper.Map<List<IngredientDto>>(_repository.GetAllIngredients());
 
 		return Ok(ingredients);
 	}
@@ -42,6 +57,9 @@ public class IngredientController : Controller
 	[HttpGet("{id}")]
 	public IActionResult GetIngredient(int id)
 	{
+		if (!_repository.IngredientExist(id))
+            return NotFound();
+
 		var ingredient = _mapper.Map<IngredientDto>(_repository.GetIngredient(id));
 
 		return Ok(ingredient);
@@ -50,7 +68,19 @@ public class IngredientController : Controller
 	[HttpPut]
 	public IActionResult UpdateIngredient([FromBody] IngredientDto ingredient)
 	{
-		var mapped = _mapper.Map<Ingredient>(ingredient);
+		if (ingredient == null)
+			return BadRequest(ModelState);
+
+		if(!ModelState.IsValid)
+			return BadRequest();
+
+		var exist = _repository.IngredientExist(ingredient.Id);
+
+
+        if (!exist)
+			return NotFound();
+
+        var mapped = _mapper.Map<Ingredient>(ingredient);
 
 		_repository.UpdateIngredient(mapped);
 
@@ -60,7 +90,12 @@ public class IngredientController : Controller
 	[HttpDelete("{id}")]
 	public IActionResult DeleteIngredient(int id)
 	{
-		_repository.DeleteIngredient(id);
+        if (!_repository.IngredientExist(id))
+            return NotFound();
+
+		if (_repository.DeleteIngredient(id))
+			return StatusCode(500, ModelState);
+
 		return Ok("Deleted with success");
 	}
 }
