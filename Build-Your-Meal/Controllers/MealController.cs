@@ -23,9 +23,28 @@ public class MealController : Controller
     [HttpPost]
     public IActionResult CreateMeal([FromBody] MealDto meal)
     {
+
+        if (meal == null)
+            return BadRequest(ModelState);
+
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        bool exist = _repository.GetAllMeals().Any(m => m.Name.Equals(meal.Name));
+
+        if (exist) 
+        {
+            ModelState.AddModelError("", "This meal already exists");
+            return BadRequest(ModelState);
+        }
+
         var mapped = _mapper.Map<Meal>(meal);
 
-        _repository.CreateMeal(mapped);
+        if (!_repository.CreateMeal(mapped))
+        {
+            ModelState.AddModelError("", "Error while saving");
+            return StatusCode(500, ModelState);
+        }
 
         return Ok("Created with success");
     }
@@ -40,6 +59,9 @@ public class MealController : Controller
     [HttpGet("{id}")]
     public IActionResult GetMeal(int id)
     {
+        if (!_repository.MealExist(id))
+            return NotFound();
+
         var mapped = _mapper.Map<MealDto>(_repository.GetMeal(id));
         return Ok(mapped);
     }
@@ -47,16 +69,33 @@ public class MealController : Controller
     [HttpDelete("id")]
     public IActionResult DeleteMeal(int id)
     {
-        _repository.DeleteMeal(id);
+        if (!_repository.MealExist(id))
+            NotFound();
+
+        if (_repository.DeleteMeal(id))
+            return StatusCode(500, ModelState);
+
         return Ok("Deleted with success");
     }
 
-    [HttpPut]
-    public IActionResult UpdateMeal([FromBody] MealDto meal)
+    [HttpPut("{id}")]
+    public IActionResult UpdateMeal(int id , [FromBody] MealDto meal)
     {
+        if (meal == null)
+            return BadRequest(ModelState);
+
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        bool exist = _repository.MealExist(id);
+
+        if (!exist)
+            return NotFound();
+
         var mapped = _mapper.Map<Meal>(meal);
 
-        _repository.UpdateMeal(mapped);
+        if (!_repository.UpdateMeal(mapped))
+            return StatusCode(500, ModelState);
 
         return Ok("Updated with success");
     }

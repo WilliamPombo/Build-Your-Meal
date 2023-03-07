@@ -12,7 +12,7 @@ public class Meal
     [StringLength(100)]
     public string Name { get; set; }
 
-    [Column(TypeName = "decimal(4,2)")]
+    [Column(TypeName = "decimal(18,2)")]
     public decimal Price { get; set; }
 
     public List<IngredientMeal>? IngredientMeals { get; set; }

@@ -8,7 +8,7 @@ public class Order
 {
     public int Id { get; set; }
     
-    [Column(TypeName = "decimal(4,2)")]
+    [Column(TypeName = "decimal(18,2)")]
     public decimal Bill { get; set; }
 
     public List<OrderMeal>? OrderMeals { get; set; }

@@ -12,7 +12,7 @@ public class Discount
     public string? Title { get; set; }
     public List<Meal> Meals { get; set; }
 
-    [Column(TypeName = "decimal(4,2)")]
+    [Column(TypeName = "decimal(18,2)")]
     public decimal Amount { get; set; }
     public List<ClientDiscount>? ClientDiscounts { get; set; }
 }
