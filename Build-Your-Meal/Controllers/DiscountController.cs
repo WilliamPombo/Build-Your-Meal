@@ -22,6 +22,20 @@ public class DiscountController : Controller
     [HttpPost]
     public IActionResult CreateDiscount([FromBody] DiscountDto discount)
     {
+        if (discount == null)
+            return BadRequest(ModelState);
+
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        bool exist = _repository.GetAllDiscounts().Any(d => d.Title.Equals(discount.Title));
+
+        if (exist)
+        {
+            ModelState.AddModelError("", "This discount already exists");
+            return BadRequest(ModelState);
+        }
+
         var mapped = _mapper.Map<Discount>(discount);
 
         _repository.CreateDiscount(mapped);
@@ -39,6 +53,9 @@ public class DiscountController : Controller
     [HttpGet("{id}")]
     public IActionResult GetDiscount(int id)
     {
+        if (!_repository.DiscountExist(id))
+            return NotFound();
+
         var discount = _mapper.Map<DiscountDto>(_repository.GetDiscount(id));
         return Ok(discount);
     }
@@ -46,16 +63,32 @@ public class DiscountController : Controller
     [HttpDelete("{id}")]
     public IActionResult DeleteDiscount(int id)
     {
-        _repository.DeleteDiscount(id);
+        if (!_repository.DiscountExist(id))
+            return NotFound();
+
+        if (_repository.DeleteDiscount(id))
+            return StatusCode(500, ModelState);
+
         return Ok("Deleted with Success");
     }
 
-    [HttpPut]
-    public IActionResult UpdateDiscount([FromBody] DiscountDto discount)
+    [HttpPut("{id}")]
+    public IActionResult UpdateDiscount(int id, [FromBody] DiscountDto discount)
     {
+
+        if (discount == null)
+            return BadRequest(ModelState);
+
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        if (!_repository.DiscountExist(id))
+            return NotFound();
+
         var mapped = _mapper.Map<Discount>(discount);
 
-        _repository.UpdateDiscount(mapped);
+        if (!_repository.UpdateDiscount(mapped)) 
+            return StatusCode(500, ModelState);
 
         return Ok("Updated with success");
     }
